@@ -160,6 +160,8 @@ _DOMAINES = (
     (("gpu", "cpu", "ram", "memoire vive", "statistiques pc"), {"stats"}),
     (("personnalite", "mode neutre", "mode concis", "sarcastique"),
      {"personnalite", "modes"}),
+    (("ludistoire", "toyscan", "factory", "catalogue jouet", "catalogue de jouets"),
+     {"ludistoire"}),
     (("presence", "je suis rentre", "je pars", "retour maison"),
      {"presence", "scenes"}),
 )
