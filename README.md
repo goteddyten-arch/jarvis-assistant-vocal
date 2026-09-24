@@ -192,6 +192,7 @@ de contenus), `securite.toujours` (autorisations N2 mémorisées), `budget.prix`
 | Réservations web | [docs/reservation.md](docs/reservation.md) |
 | Instagram | [docs/instagram.md](docs/instagram.md) |
 | Serveur MCP | [docs/mcp.md](docs/mcp.md) |
+| Pont Ludistoire (lecture seule) | [docs/ludistoire.md](docs/ludistoire.md) |
 | Pont iPhone (Raccourcis) | [docs/iphone.md](docs/iphone.md) |
 | **Hermes (délégation, cloisonnement)** | [docs/hermes.md](docs/hermes.md) |
 | **Hub de contenu (Vault + génération)** | [docs/hub_contenu.md](docs/hub_contenu.md) |
