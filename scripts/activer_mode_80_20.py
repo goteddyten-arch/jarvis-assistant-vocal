@@ -36,6 +36,7 @@ def main() -> None:
 
     whisper = _section(conf, "whisper")
     whisper["modele"] = "small"
+    whisper["beam_size"] = 3
 
     assistant = _section(conf, "assistant")
     assistant["duree_suite"] = 4
@@ -63,7 +64,7 @@ def main() -> None:
     )
 
     print("Profil Jarvis 80/20 activé.")
-    print("  Whisper : small")
+    print("  Whisper : small, beam_size=3")
     print("  Fenêtre de suivi : 4 s")
     print("  Boucles outils : 3 tours / 6 appels max")
     print("  Ollama : think=false, contexte 8k, 16 messages, keep-alive 10 min")
