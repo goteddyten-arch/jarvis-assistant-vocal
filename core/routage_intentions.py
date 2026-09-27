@@ -69,6 +69,7 @@ def decider_prioritaire(phrase: str, piece: str = "") -> Decision | None:
         return Decision("vision", tache=phrase)
 
     for module, fonction in (
+        ("tools.temps", "router_commande_temps"),
         ("tools.alexa", "router_commande"),
         ("tools.media", "router_commande_media"),
         ("tools.apps", "router_ouverture_simple"),
