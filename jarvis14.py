@@ -248,7 +248,9 @@ def niveau(bloc_float):
 
 def _transcrire(whisper, audio, beam_size=5):
     """Transcrit en français en favorisant les noms propres/projets configurés."""
-    options = {"language": "fr", "beam_size": beam_size}
+    beam_config = int(config.reglage("whisper.beam_size", beam_size) or beam_size)
+    beam_effectif = max(1, min(int(beam_size), beam_config))
+    options = {"language": "fr", "beam_size": beam_effectif}
     if MOTS_CLES_WHISPER:
         options["hotwords"] = MOTS_CLES_WHISPER
     segments, _ = whisper.transcribe(audio, **options)
