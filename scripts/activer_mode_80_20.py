@@ -47,6 +47,7 @@ def main() -> None:
     ollama["think"] = False
     ollama["max_messages"] = 16
     ollama["num_ctx"] = 8192
+    ollama["num_ctx_complexe"] = 16384
     ollama["num_predict"] = 256
     ollama["keep_alive"] = "10m"
 
