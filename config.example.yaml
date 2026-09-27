@@ -36,7 +36,8 @@ ollama:                        # mode local : modele de langage local (http://lo
   think: false                 # false = pas de "raisonnement" natif : indispensable pour la latence et les
                                # appels d'outils (sinon tres lent / rendus en texte). Laisse false.
   max_messages: 16             # contexte conversationnel local recent ; la mémoire durable reste dans le système
-  num_ctx: 8192                # fenêtre Ollama/KV cache ; 8192 suffit à la majorité des commandes vocales
+  num_ctx: 8192                # fenêtre rapide pour la majorité des commandes vocales
+  num_ctx_complexe: 16384      # montée automatique si beaucoup d'outils sont nécessaires
   num_predict: 256             # borne la longueur d'une réponse locale
   keep_alive: "10m"            # garde Qwen chaud entre deux demandes pour éviter le rechargement
   temperature: 0.3
