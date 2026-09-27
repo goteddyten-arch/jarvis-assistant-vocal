@@ -70,8 +70,11 @@ def decider_prioritaire(phrase: str, piece: str = "") -> Decision | None:
 
     for module, fonction in (
         ("tools.temps", "router_commande_temps"),
+        ("tools.meteo", "router_commande_meteo"),
+        ("tools.systeme", "router_commande_systeme"),
         ("tools.alexa", "router_commande"),
         ("tools.media", "router_commande_media"),
+        ("tools.navigateur", "router_commande_navigateur"),
         ("tools.apps", "router_ouverture_simple"),
     ):
         try:
