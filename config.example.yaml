@@ -87,6 +87,7 @@ audio:
 
 whisper:
   modele: "medium"
+  beam_size: 5                 # précision par défaut ; le profil 80/20 passe à 3
   mots_cles: "Ludistoire, Factory, ToyScan, BRIO, WAMAS, Jarvis"  # noms propres a favoriser pendant la transcription
 
 interruption:                  # couper Jarvis quand tu dis "attends/stop/arrete" par-dessus
