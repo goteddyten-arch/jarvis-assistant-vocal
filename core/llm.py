@@ -313,7 +313,13 @@ class OllamaProvider(ProviderLLM):
         }
         num_ctx = reglage("ollama.num_ctx", None)
         if num_ctx:
-            options["num_ctx"] = int(num_ctx)
+            num_ctx = int(num_ctx)
+            # Une requête ambiguë peut exposer le catalogue complet d'outils.
+            # On agrandit alors temporairement le contexte pour préserver les
+            # capacités avancées au lieu de sacrifier le potentiel au mode rapide.
+            if len(tools) >= 12:
+                num_ctx = max(num_ctx, int(reglage("ollama.num_ctx_complexe", 16384) or 16384))
+            options["num_ctx"] = num_ctx
         num_predict = reglage("ollama.num_predict", None)
         if num_predict:
             options["num_predict"] = int(num_predict)
