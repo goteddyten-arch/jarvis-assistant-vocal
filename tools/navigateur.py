@@ -67,6 +67,27 @@ def _sans_verbe(texte):
     return brut, normalise
 
 
+def router_commande_navigateur(phrase, piece=""):
+    """Route une recherche web explicite sans demander au LLM de choisir l'outil."""
+    p = " ".join(re.sub(
+        r"[^a-z0-9]+", " ", sans_accents(str(phrase or "").lower())
+    ).split())
+    if not p:
+        return None
+    # Les domaines spécialisés gardent leurs propres outils.
+    if any(mot in p.split() for mot in ("mail", "mails", "gmail", "email", "agenda")):
+        return None
+
+    m = re.match(r"^(?:cherche|recherche)\s+(?:sur\s+(?:google|internet|le web)\s+)?(.+)$", p)
+    if not m:
+        return None
+    requete = m.group(1).strip()
+    requete = re.sub(r"\s+sur\s+(?:google|internet|le web)$", "", requete).strip()
+    if not requete:
+        return None
+    return "browser_open", {"recherche": requete}
+
+
 def est_demande_web(texte):
     """Vrai pour une URL, une recherche explicite ou un service web connu."""
     brut, normalise = _sans_verbe(texte)
