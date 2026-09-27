@@ -9,6 +9,24 @@ from datetime import datetime
 
 from core.config import reglage
 from core.registre import outil
+from core.util import sans_accents
+
+def router_commande_meteo(phrase, piece=""):
+    """Route les questions sur la météo actuelle sans appeler le LLM."""
+    p = " ".join(sans_accents(str(phrase or "").lower()).split())
+    if not p:
+        return None
+    # La fonction locale ne donne que les conditions actuelles : une prévision
+    # (demain, ce soir, cette semaine...) reste volontairement au LLM/web.
+    if any(mot in p for mot in (
+            "demain", "apres demain", "ce soir", "cette nuit",
+            "semaine", "week end", "weekend", "prevision")):
+        return None
+    if ("meteo" in p or "quel temps" in p or "temps fait" in p
+            or "temperature" in p or "il fait combien" in p):
+        return "meteo", {}
+    return None
+
 
 # Position devinee via l'IP publique, mise en cache pour la session.
 _LIEU = {}
