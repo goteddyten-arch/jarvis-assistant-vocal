@@ -24,6 +24,19 @@ class SelectionDomainesTests(unittest.TestCase):
         self.assertEqual(decision.type, "vision")
         self.assertFalse(est_demande_vision_ecran("Clique sur ce bouton à l'écran"))
 
+    def test_heure_prend_la_route_locale_sans_llm(self):
+        decision = decider_prioritaire("Quelle heure est-il ?")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.type, "outil")
+        self.assertEqual(decision.outil, "heure_et_date")
+
+    def test_minuteur_simple_prend_la_route_locale(self):
+        decision = decider_prioritaire("Mets un minuteur de 5 minutes")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.type, "outil")
+        self.assertEqual(decision.outil, "lancer_minuteur")
+        self.assertEqual(decision.arguments["secondes"], 300)
+
     def test_plusieurs_domaines_peuvent_etre_combines(self):
         modules = modules_pour_phrase(
             "Regarde mon agenda puis lis mes mails et donne-moi la météo")
