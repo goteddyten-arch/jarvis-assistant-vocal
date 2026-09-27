@@ -45,6 +45,16 @@ def main() -> None:
 
     ollama = _section(conf, "ollama")
     ollama["think"] = False
+    ollama["max_messages"] = 16
+    ollama["num_ctx"] = 8192
+    ollama["num_predict"] = 256
+    ollama["keep_alive"] = "10m"
+
+    # La scène de démarrage peut lancer brief, musique et intégrations en parallèle
+    # du premier échange vocal. On la diffère en profil rapide sans supprimer
+    # aucune capacité : elle reste appelable à la demande.
+    scenes = _section(conf, "scenes")
+    scenes["au_demarrage_actif"] = False
 
     CONFIG.write_text(
         yaml.safe_dump(conf, allow_unicode=True, sort_keys=False),
@@ -55,7 +65,8 @@ def main() -> None:
     print("  Whisper : small")
     print("  Fenêtre de suivi : 4 s")
     print("  Boucles outils : 3 tours / 6 appels max")
-    print("  Ollama think : false")
+    print("  Ollama : think=false, contexte 8k, 16 messages, keep-alive 10 min")
+    print("  Scène automatique au démarrage : différée")
     print(f"Sauvegarde : {sauvegarde.name}")
 
 
