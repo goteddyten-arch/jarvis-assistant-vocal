@@ -8,6 +8,32 @@ from pathlib import Path
 
 from core.config import reglage
 from core.registre import outil
+from core.util import sans_accents
+
+def router_commande_systeme(phrase, piece=""):
+    """Route les réglages audio évidents sans passer par le LLM."""
+    texte = " ".join(str(phrase or "").strip().lower().split())
+    p = sans_accents(texte)
+    if not p:
+        return None
+
+    cible_audio = any(mot in p for mot in ("volume", "son", "audio"))
+    if p in {"muet", "mute"} or (
+            cible_audio and any(expr in p for expr in (
+                "coupe le son", "coupe le volume", "mets en muet",
+                "met en muet", "active le muet"))):
+        return "controler_media", {"action": "muet"}
+
+    if cible_audio and any(expr in p for expr in (
+            "monte", "augmente", "plus fort", "hausse")):
+        return "regler_volume", {"sens": "monter", "crans": 5}
+
+    if cible_audio and any(expr in p for expr in (
+            "baisse", "diminue", "moins fort", "reduis", "reduit")):
+        return "regler_volume", {"sens": "baisser", "crans": 5}
+
+    return None
+
 
 # Codes des touches multimedia Windows
 _TOUCHES = {
