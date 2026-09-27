@@ -281,6 +281,26 @@ class OllamaProvider(ProviderLLM):
             "parameters": o.get("input_schema", {"type": "object", "properties": {}})}}
             for o in outils]
 
+    def _reduire_historique(self, historique):
+        """Garde un contexte local compact pour réduire le coût de préremplissage.
+
+        La mémoire durable est déjà injectée dans le système ; ici on conserve
+        seulement les derniers tours conversationnels nécessaires au dialogue.
+        """
+        maximum = int(reglage("ollama.max_messages", 16) or 16)
+        maximum = max(6, min(maximum, 40))
+        if len(historique) <= maximum:
+            return historique
+
+        extrait = list(historique[-maximum:])
+        # Évite de commencer sur un résultat d'outil orphelin : on repart du
+        # premier vrai message utilisateur textuel disponible dans la fenêtre.
+        for i, message in enumerate(extrait):
+            if (message.get("role") == "user"
+                    and isinstance(message.get("content"), str)):
+                return extrait[i:]
+        return extrait
+
     def _chat(self, messages, tools, nudge=None):
         import requests
         if nudge:
@@ -288,10 +308,24 @@ class OllamaProvider(ProviderLLM):
         # think=false : desactive le "raisonnement" natif (qwen3.5, etc.). Sinon le
         # modele est tres lent et rend parfois ses appels d'outils en texte au lieu
         # de les executer. Un modele sans thinking ignore ce parametre.
+        options = {
+            "temperature": float(reglage("ollama.temperature", 0.3) or 0.3),
+        }
+        num_ctx = reglage("ollama.num_ctx", None)
+        if num_ctx:
+            options["num_ctx"] = int(num_ctx)
+        num_predict = reglage("ollama.num_predict", None)
+        if num_predict:
+            options["num_predict"] = int(num_predict)
+
         corps = {
             "model": self.modele, "messages": messages, "tools": tools,
             "stream": False, "think": bool(reglage("ollama.think", False)),
-            "options": {"temperature": 0.3}}
+            "options": options,
+        }
+        keep_alive = reglage("ollama.keep_alive", "")
+        if keep_alive:
+            corps["keep_alive"] = keep_alive
         if not tools:
             corps.pop("tools")
         r = requests.post(f"{self.hote}/api/chat", timeout=120, json=corps)
@@ -314,6 +348,7 @@ class OllamaProvider(ProviderLLM):
         return Reponse(stop, blocs)
 
     def repondre(self, systeme, historique, outils):
+        historique = self._reduire_historique(historique)
         messages = self._traduire(systeme, historique)
         tools = self._outils(outils)
         try:
