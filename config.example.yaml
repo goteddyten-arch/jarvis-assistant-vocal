@@ -35,6 +35,12 @@ ollama:                        # mode local : modele de langage local (http://lo
                                # Ollama recent requis (le tool-calling qwen3.5 buggait sur d'anciennes versions).
   think: false                 # false = pas de "raisonnement" natif : indispensable pour la latence et les
                                # appels d'outils (sinon tres lent / rendus en texte). Laisse false.
+  max_messages: 16             # contexte conversationnel local recent ; la mémoire durable reste dans le système
+  num_ctx: 8192                # fenêtre rapide pour la majorité des commandes vocales
+  num_ctx_complexe: 16384      # montée automatique si beaucoup d'outils sont nécessaires
+  num_predict: 256             # borne la longueur d'une réponse locale
+  keep_alive: "10m"            # garde Qwen chaud entre deux demandes pour éviter le rechargement
+  temperature: 0.3
 
 voix_locale: piper             # mode local : "piper" (recommande FR) ou "kokoro"
 
@@ -81,6 +87,8 @@ audio:
 
 whisper:
   modele: "medium"
+  beam_size: 5                 # précision par défaut ; le profil 80/20 passe à 3
+  mots_cles: "Ludistoire, Factory, ToyScan, BRIO, WAMAS, Jarvis"  # noms propres a favoriser pendant la transcription
 
 interruption:                  # couper Jarvis quand tu dis "attends/stop/arrete" par-dessus
   facteur: 1.8                 # tu dois parler ~1.8x plus fort que l'echo de Jarvis (baisse si ca ne coupe pas)

@@ -56,6 +56,7 @@ def _haut_parleur():
 # par les providers (core/llm.py, core/tts.py), selon config.yaml
 # (mode: local|hybride|qualite).
 MODELE_WHISPER = config.reglage("whisper.modele", "medium")
+MOTS_CLES_WHISPER = config.reglage("whisper.mots_cles", "Ludistoire, Factory, ToyScan, BRIO, WAMAS, Jarvis")
 
 TAUX = 16000               # taux de TRAITEMENT : openWakeWord ET faster-whisper exigent 16 kHz
 BLOC = 1280                # 80 ms @ 16 kHz (trame attendue par openWakeWord)
@@ -243,6 +244,17 @@ def _hud_status():
 
 def niveau(bloc_float):
     return float(np.sqrt(np.mean(bloc_float**2)))
+
+
+def _transcrire(whisper, audio, beam_size=5):
+    """Transcrit en français en favorisant les noms propres/projets configurés."""
+    beam_config = int(config.reglage("whisper.beam_size", beam_size) or beam_size)
+    beam_effectif = max(1, min(int(beam_size), beam_config))
+    options = {"language": "fr", "beam_size": beam_effectif}
+    if MOTS_CLES_WHISPER:
+        options["hotwords"] = MOTS_CLES_WHISPER
+    segments, _ = whisper.transcribe(audio, **options)
+    return " ".join(segment.text for segment in segments).strip()
 
 
 def jouer(chemin_wav):
@@ -1075,8 +1087,7 @@ def repondre_en_ecoutant(historique, flux, reveil, whisper):
             tampon = []
             blocs_sur = 0
             try:
-                segments, _ = whisper.transcribe(extrait, language="fr", beam_size=1)
-                dit = " ".join(s.text for s in segments).strip()
+                dit = _transcrire(whisper, extrait, beam_size=1)
             except Exception:
                 dit = ""
             if debug:
@@ -1112,8 +1123,7 @@ def _confirmer(interrompu, relancer, whisper, historique, flux):
                           attente_debut=float(config.reglage("assistant.attente_confirmation", 3.0)))
     reponse = ""
     if audio_conf is not None:
-        seg, _ = whisper.transcribe(audio_conf, language="fr", beam_size=5)
-        reponse = nettoyer(" ".join(s.text for s in seg).strip())
+        reponse = nettoyer(_transcrire(whisper, audio_conf, beam_size=5))
     print(f"  [confirmation] {reponse or '(rien)'}")
 
     memoriser = _est_toujours(reponse)
@@ -1144,8 +1154,7 @@ def _tronquer(historique):
 def traiter(audio, whisper, historique, flux, reveil):
     """Transcrit, repond, parle. Renvoie True si on doit enchainer (relance)."""
     debut_stt = time.monotonic()
-    segments, _ = whisper.transcribe(audio, language="fr", beam_size=5)
-    question = nettoyer(" ".join(s.text for s in segments).strip())
+    question = nettoyer(_transcrire(whisper, audio, beam_size=5))
     LOG.info("latence STT %.3fs", time.monotonic() - debut_stt)
 
     if not question or len(question) < 3:
@@ -1259,12 +1268,10 @@ def main():
 
     # Les appels telephoniques reutilisent ce Whisper pour transcrire les reponses.
     from tools.appels import definir_transcripteur
-    definir_transcripteur(lambda chemin: " ".join(
-        s.text for s in whisper.transcribe(chemin, language="fr", beam_size=5)[0]).strip())
+    definir_transcripteur(lambda chemin: _transcrire(whisper, chemin, beam_size=5))
     # V2 (conversation temps reel) : transcription d'un tableau audio (16kHz float32).
     from tools.appel_direct import definir_transcripteur_direct
-    definir_transcripteur_direct(lambda audio: " ".join(
-        s.text for s in whisper.transcribe(audio, language="fr", beam_size=1)[0]).strip())
+    definir_transcripteur_direct(lambda audio: _transcrire(whisper, audio, beam_size=1))
 
     charger_pieces_hue()
     allumer_si_nuit()

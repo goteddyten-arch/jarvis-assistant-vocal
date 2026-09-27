@@ -24,6 +24,40 @@ class SelectionDomainesTests(unittest.TestCase):
         self.assertEqual(decision.type, "vision")
         self.assertFalse(est_demande_vision_ecran("Clique sur ce bouton à l'écran"))
 
+    def test_heure_prend_la_route_locale_sans_llm(self):
+        decision = decider_prioritaire("Quelle heure est-il ?")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.type, "outil")
+        self.assertEqual(decision.outil, "heure_et_date")
+
+    def test_minuteur_simple_prend_la_route_locale(self):
+        decision = decider_prioritaire("Mets un minuteur de 5 minutes")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.type, "outil")
+        self.assertEqual(decision.outil, "lancer_minuteur")
+        self.assertEqual(decision.arguments["secondes"], 300)
+
+    def test_meteo_actuelle_prend_la_route_locale(self):
+        decision = decider_prioritaire("Quelle météo aujourd'hui ?")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.outil, "meteo")
+
+    def test_prevision_meteo_reste_au_llm(self):
+        decision = decider_prioritaire("Quelle météo demain ?")
+        self.assertIsNone(decision)
+
+    def test_volume_prend_la_route_locale(self):
+        decision = decider_prioritaire("Baisse le volume")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.outil, "regler_volume")
+        self.assertEqual(decision.arguments["sens"], "baisser")
+
+    def test_recherche_google_prend_la_route_locale(self):
+        decision = decider_prioritaire("Recherche faster whisper sur Google")
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.outil, "browser_open")
+        self.assertEqual(decision.arguments["recherche"], "faster whisper")
+
     def test_plusieurs_domaines_peuvent_etre_combines(self):
         modules = modules_pour_phrase(
             "Regarde mon agenda puis lis mes mails et donne-moi la météo")

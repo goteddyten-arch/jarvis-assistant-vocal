@@ -67,6 +67,27 @@ def _sans_verbe(texte):
     return brut, normalise
 
 
+def router_commande_navigateur(phrase, piece=""):
+    """Route une recherche web explicite sans demander au LLM de choisir l'outil."""
+    p = " ".join(re.sub(
+        r"[^a-z0-9]+", " ", sans_accents(str(phrase or "").lower())
+    ).split())
+    if not p:
+        return None
+    # Les domaines spécialisés gardent leurs propres outils.
+    if any(mot in p.split() for mot in ("mail", "mails", "gmail", "email", "agenda")):
+        return None
+
+    m = re.match(r"^(?:cherche|recherche)\s+(?:sur\s+(?:google|internet|le web)\s+)?(.+)$", p)
+    if not m:
+        return None
+    requete = m.group(1).strip()
+    requete = re.sub(r"\s+sur\s+(?:google|internet|le web)$", "", requete).strip()
+    if not requete:
+        return None
+    return "browser_open", {"recherche": requete}
+
+
 def est_demande_web(texte):
     """Vrai pour une URL, une recherche explicite ou un service web connu."""
     brut, normalise = _sans_verbe(texte)
@@ -200,6 +221,33 @@ def _pages(browser):
     return pages
 
 
+def _url_equivalente(url_a, url_b):
+    """Compare deux URLs en ignorant seulement le slash final et la casse du host."""
+    try:
+        a = urlparse(url_a)
+        b = urlparse(url_b)
+        return (
+            (a.scheme or "https").lower() == (b.scheme or "https").lower()
+            and (a.hostname or "").lower() == (b.hostname or "").lower()
+            and (a.path or "/").rstrip("/") == (b.path or "/").rstrip("/")
+            and (a.query or "") == (b.query or "")
+            and (a.fragment or "") == (b.fragment or "")
+        )
+    except Exception:
+        return False
+
+
+def _page_deja_ouverte(browser, cible):
+    """Renvoie un onglet déjà sur cette cible pour éviter les doublons."""
+    for p in reversed(_pages(browser)):
+        try:
+            if _url_equivalente(p.url, cible):
+                return p
+        except Exception:
+            continue
+    return None
+
+
 def _page_active(browser):
     """Meilleur effort : l'onglet visible/au premier plan."""
     pages = _pages(browser)
@@ -247,6 +295,14 @@ def browser_open(url: str = "", recherche: str = "") -> str:
         cible = _resoudre_cible(url, recherche)
         if not cible:
             return "Dis-moi quoi ouvrir (une adresse ou une recherche)."
+        page = _page_deja_ouverte(browser, cible)
+        if page is not None:
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
+            return f"{page.title() or cible} est déjà ouvert."
+
         page = _contexte(browser).new_page()
         page.goto(cible, wait_until="domcontentloaded", timeout=15000)
         try:
